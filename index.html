@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Valentine?</title>
+    <style>
+      :root {
+        --bg: #fff7fb;
+        --card: #ffffff;
+        --text: #1f1f1f;
+        --muted: #666;
+        --pink: #ff4d88;
+        --pink-dark: #e93d79;
+        --danger: #ff2b2b;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        background: radial-gradient(1200px 800px at 50% 20%, #ffe1ee 0%, var(--bg) 55%, #ffffff 100%);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      .card {
+        width: min(900px, 94vw);
+        background: color-mix(in srgb, var(--card) 92%, transparent);
+        border: 1px solid rgba(0,0,0,0.06);
+        border-radius: 24px;
+        padding: 34px 28px 24px;
+        box-shadow: 0 18px 60px rgba(0,0,0,0.08);
+        position: relative;
+      }
+
+      h1 {
+        margin: 0 0 18px;
+        font-size: clamp(30px, 4vw, 48px);
+        letter-spacing: -0.02em;
+        text-align: center;
+      }
+
+      /* Bigger play area */
+      .stage {
+        position: relative;
+        width: 100%;
+        height: min(62vh, 520px);
+        min-height: 420px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(0,0,0,0.05);
+        overflow: hidden;
+      }
+
+      .btn {
+        position: absolute;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 16px;
+        user-select: none;
+        will-change: transform, left, top;
+      }
+
+      /* NO button */
+      #noBtn {
+        padding: 14px 22px;
+        border-radius: 999px;
+        border: 2px solid rgba(0,0,0,0.12);
+        background: #ffffff;
+        transition: box-shadow 160ms ease, border-color 160ms ease;
+        z-index: 3;
+      }
+      #noBtn:hover {
+        box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+        border-color: rgba(0,0,0,0.18);
+      }
+
+      /* YES button as a crisp CSS heart */
+      #yesBtn {
+        width: 96px;
+        height: 96px;
+        border: none;
+        background: transparent;
+        padding: 0;
+        z-index: 2;
+        transform-origin: center;
+        backface-visibility: hidden;
+      }
+
+      #yesBtn .heart {
+        position: absolute;
+        inset: 0;
+        transform: rotate(-45deg);
+        background: var(--pink);
+        border-radius: 14px;
+        box-shadow: 0 18px 38px rgba(255, 77, 136, 0.18);
+        backface-visibility: hidden;
+      }
+
+      #yesBtn .heart::before,
+      #yesBtn .heart::after {
+        content: "";
+        position: absolute;
+        width: 96px;
+        height: 96px;
+        background: var(--pink);
+        border-radius: 50%;
+      }
+
+      #yesBtn .heart::before {
+        top: -48px;
+        left: 0;
+      }
+
+      #yesBtn .heart::after {
+        left: 48px;
+        top: 0;
+      }
+
+      /* Straight label, centered */
+      #yesBtn .label {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: white;
+        font-weight: 900;
+        font-size: 18px;
+        letter-spacing: 0.2px;
+        text-shadow: 0 10px 18px rgba(0,0,0,0.12);
+        pointer-events: none;
+      }
+
+      #yesBtn:active { transform: scale(0.98); }
+
+      /* OVERLAYS */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+        opacity: 0;
+        z-index: 9999;
+      }
+
+      .overlay.flash-red {
+        background: rgba(255, 43, 43, 0.22);
+      }
+
+      .overlay .overlay-card {
+        background: rgba(255,255,255,0.9);
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 16px;
+        padding: 16px 18px;
+        box-shadow: 0 18px 60px rgba(0,0,0,0.16);
+        font-weight: 800;
+        color: #111;
+      }
+
+      .overlay.show {
+        opacity: 1;
+        animation: overlayFade 900ms ease forwards;
+      }
+
+      @keyframes overlayFade {
+        0% { opacity: 0; transform: scale(0.98); }
+        12% { opacity: 1; transform: scale(1); }
+        75% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(1.02); }
+      }
+
+      /* SUCCESS VIEW */
+      .success {
+        display: none;
+        text-align: center;
+        padding: 6px 4px 0;
+      }
+
+      .hooray {
+        font-size: clamp(34px, 5vw, 62px);
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        margin: 6px 0 10px;
+        text-shadow: 0 18px 34px rgba(255, 77, 136, 0.22);
+        animation: hoorayPop 900ms ease both;
+      }
+
+      @keyframes hoorayPop {
+        0% { transform: scale(0.85) rotate(-2deg); opacity: 0; }
+        55% { transform: scale(1.1) rotate(1deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      }
+
+      .photo-wrap {
+        width: min(520px, 86vw);
+        margin: 12px auto 14px;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.06);
+        box-shadow: 0 18px 60px rgba(0,0,0,0.10);
+        background: rgba(255,255,255,0.6);
+      }
+
+      .photo-wrap img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .custom-message {
+        width: min(640px, 90vw);
+        margin: 10px auto 16px;
+        font-size: 18px;
+        color: rgba(0,0,0,0.78);
+        line-height: 1.35;
+        white-space: pre-wrap;
+      }
+
+      .hooray-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 14px 22px;
+        border-radius: 999px;
+        border: none;
+        background: var(--pink);
+        color: white;
+        font-weight: 900;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: 0 18px 40px rgba(255, 77, 136, 0.22);
+        transition: transform 160ms ease, background 160ms ease;
+      }
+
+      .hooray-btn:hover { background: var(--pink-dark); transform: translateY(-1px); }
+      .hooray-btn:active { transform: translateY(0px) scale(0.98); }
+    </style>
+  </head>
+
+  <body>
+    <div class="card">
+      <div id="questionView">
+        <h1>Will you be my Valentine?</h1>
+        <div class="stage" id="stage">
+          <button class="btn" id="yesBtn" aria-label="Yes">
+            <div class="heart"></div>
+            <div class="label" id="yesLabel">Yes</div>
+          </button>
+
+          <button class="btn" id="noBtn">No</button>
+        </div>
+      </div>
+
+      <div class="success" id="successView">
+        <div class="hooray" id="hoorayText">HOORAY</div>
+
+        <div class="photo-wrap">
+          <img id="hoorayPhoto" alt="celebration photo" />
+        </div>
+
+        <div class="custom-message" id="customMessage">
+I am so happy to have you as my Valenine for two years now! 
+I love you so much and I'm so excited to see you in Bangkok
+
+        </div>
+
+        <button class="hooray-btn" id="hoorayBtn">HOORAY AGAIN</button>
+      </div>
+    </div>
+
+    <div class="overlay flash-red" id="wrongOverlay" aria-hidden="true">
+      <div class="overlay-card" id="wrongText">Sorry wrong answer, please try again</div>
+    </div>
+
+    <script>
+      const stage = document.getElementById("stage");
+      const yesBtn = document.getElementById("yesBtn");
+      const noBtn = document.getElementById("noBtn");
+      const yesLabel = document.getElementById("yesLabel");
+
+      const questionView = document.getElementById("questionView");
+      const successView = document.getElementById("successView");
+
+      const wrongOverlay = document.getElementById("wrongOverlay");
+
+      const hoorayPhoto = document.getElementById("hoorayPhoto");
+      const hoorayText = document.getElementById("hoorayText");
+      const hoorayBtn = document.getElementById("hoorayBtn");
+
+      /*
+        IMPORTANT:
+        Put your photos in: valentine-site/photos/
+        Then list them here exactly (including extension).
+      */
+      const HOORAY_PHOTOS = [
+        "photos/hooray1.png",
+        "photos/hooray2.png",
+        "photos/hooray3.png",
+        "photos/hooray4.png",
+        "photos/hooray5.jpg",
+        "photos/hooray6.jpg",
+        "photos/hooray7.jpg",
+        "photos/hooray8.png",
+      ];
+
+      // Positions in stage coordinates
+      let yesPos = { x: 0, y: 0 };
+      let noPos = { x: 0, y: 0 };
+
+      // YES growth
+      let yesScale = 1;
+      const MAX_SCALE = 22;
+      const BASE_GROW_PER_MOVE = 0.0018;   // slow continuous
+      const EXTRA_GROW_NEAR_NO = 0.018;    // grows faster when chasing No
+
+      // NO wrong clicks
+      let noClicks = 0;
+      let noHasConverted = false;
+
+      function clamp(v, min, max) {
+        return Math.max(min, Math.min(max, v));
+      }
+
+      function setYesTransform() {
+        // translate3d helps keep transforms smooth and reduces fuzziness
+        yesBtn.style.transform = `translate3d(-50%, -50%, 0) scale(${yesScale})`;
+      }
+
+      function setYesCenter(x, y) {
+        yesBtn.style.left = `${x}px`;
+        yesBtn.style.top = `${y}px`;
+        setYesTransform();
+      }
+
+      function setNoCenter(x, y) {
+        noBtn.style.left = `${x}px`;
+        noBtn.style.top = `${y}px`;
+        noBtn.style.transform = `translate3d(-50%, -50%, 0)`;
+      }
+
+      function initPositions() {
+        const rect = stage.getBoundingClientRect();
+        yesPos = { x: rect.width * 0.35, y: rect.height * 0.60 };
+        noPos = { x: rect.width * 0.65, y: rect.height * 0.35 };
+        yesScale = 1;
+        setYesCenter(yesPos.x, yesPos.y);
+        setNoCenter(noPos.x, noPos.y);
+      }
+
+      function showWrongOverlay() {
+        wrongOverlay.classList.remove("show");
+        // trigger reflow so animation restarts
+        void wrongOverlay.offsetWidth;
+        wrongOverlay.classList.add("show");
+      }
+
+      function getMouseInStage(clientX, clientY) {
+        const r = stage.getBoundingClientRect();
+        return { x: clientX - r.left, y: clientY - r.top, w: r.width, h: r.height };
+      }
+
+      function flee(clientX, clientY) {
+        const stageRect = stage.getBoundingClientRect();
+        const m = getMouseInStage(clientX, clientY);
+
+        const dx = noPos.x - m.x;
+        const dy = noPos.y - m.y;
+        const dist = Math.hypot(dx, dy);
+
+        const dangerRadius = 210;
+
+        if (dist < dangerRadius) {
+          const push = (dangerRadius - dist) / dangerRadius; // 0..1
+          const pushStrength = 280;
+
+          const ux = dx / (dist || 1);
+          const uy = dy / (dist || 1);
+
+          let newX = noPos.x + ux * pushStrength * push;
+          let newY = noPos.y + uy * pushStrength * push;
+
+          // Keep away from edges enough that it cannot be corner-trapped
+          const padX = Math.max(60, noBtn.offsetWidth * 0.9);
+          const padY = Math.max(60, noBtn.offsetHeight * 1.2);
+
+          newX = clamp(newX, padX, stageRect.width - padX);
+          newY = clamp(newY, padY, stageRect.height - padY);
+
+          noPos = { x: newX, y: newY };
+          setNoCenter(noPos.x, noPos.y);
+
+          // Chasing No accelerates Yes growth
+          yesScale = clamp(yesScale + EXTRA_GROW_NEAR_NO * push, 1, MAX_SCALE);
+          setYesTransform();
+        }
+      }
+
+      function gentleGrowth(clientX, clientY) {
+        const stageRect = stage.getBoundingClientRect();
+        const m = getMouseInStage(clientX, clientY);
+
+        const inside = m.x >= 0 && m.y >= 0 && m.x <= stageRect.width && m.y <= stageRect.height;
+        if (inside) {
+          yesScale = clamp(yesScale + BASE_GROW_PER_MOVE, 1, MAX_SCALE);
+          setYesTransform();
+        }
+      }
+
+      let lastPhoto = null;
+
+    function pickRandomPhoto() {
+        if (!HOORAY_PHOTOS.length) return null;
+
+        if (HOORAY_PHOTOS.length === 1) return HOORAY_PHOTOS[0];
+
+        let candidate;
+        do {
+            const idx = Math.floor(Math.random() * HOORAY_PHOTOS.length);
+            candidate = HOORAY_PHOTOS[idx];
+        } while (candidate === lastPhoto);
+
+        lastPhoto = candidate;
+        return candidate;
+        }
+
+
+      function confettiBurst() {
+        const count = 34;
+        for (let i = 0; i < count; i++) {
+          const s = document.createElement("div");
+          s.textContent = Math.random() < 0.6 ? "💗" : "✨";
+          s.style.position = "fixed";
+          s.style.left = `${Math.random() * 100}vw`;
+          s.style.top = `-24px`;
+          s.style.fontSize = `${18 + Math.random() * 30}px`;
+          s.style.pointerEvents = "none";
+          s.style.zIndex = 9999;
+          document.body.appendChild(s);
+
+          const duration = 1200 + Math.random() * 1600;
+          const drift = (Math.random() - 0.5) * 260;
+
+          s.animate(
+            [
+              { transform: `translate(0,0) rotate(0deg)`, opacity: 1 },
+              { transform: `translate(${drift}px, 105vh) rotate(280deg)`, opacity: 0.95 },
+            ],
+            { duration, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" }
+          );
+
+          setTimeout(() => s.remove(), duration + 100);
+        }
+      }
+
+      function playHooray() {
+        confettiBurst();
+
+        // Restart hooray animation
+        hoorayText.style.animation = "none";
+        void hoorayText.offsetWidth;
+        hoorayText.style.animation = "";
+
+        const src = pickRandomPhoto();
+        if (src) {
+          hoorayPhoto.src = src + `?v=${Date.now()}`; // cache-bust so it always refreshes locally
+        }
+      }
+
+      function goToSuccess() {
+        questionView.style.display = "none";
+        successView.style.display = "block";
+        playHooray();
+      }
+
+      // YES click
+      yesBtn.addEventListener("click", () => {
+        goToSuccess();
+      });
+
+      // NO click behavior with 3-step logic
+      noBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (noHasConverted) {
+          goToSuccess();
+          return;
+        }
+
+        noClicks += 1;
+
+        if (noClicks <= 2) {
+          showWrongOverlay();
+          // Optional: shove it away instantly on click so it feels impossible
+          const stageRect = stage.getBoundingClientRect();
+          const nx = Math.random() * stageRect.width;
+          const ny = Math.random() * stageRect.height;
+          noPos = { x: clamp(nx, 90, stageRect.width - 90), y: clamp(ny, 90, stageRect.height - 90) };
+          setNoCenter(noPos.x, noPos.y);
+          return;
+        }
+
+        // Third time: convert NO into YES
+        noHasConverted = true;
+        noBtn.textContent = "Yes I would love to!";
+        noBtn.style.background = "white";
+        noBtn.style.borderColor = "rgba(255,77,136,0.55)";
+        noBtn.style.boxShadow = "0 18px 50px rgba(255,77,136,0.16)";
+        noBtn.style.fontWeight = "900";
+        noBtn.style.padding = "14px 22px";
+      });
+
+      // Make NO flee and YES grow
+      stage.addEventListener("mousemove", (e) => {
+        flee(e.clientX, e.clientY);
+        gentleGrowth(e.clientX, e.clientY);
+      });
+
+      // Hooray again button
+      hoorayBtn.addEventListener("click", () => {
+        playHooray();
+      });
+
+      window.addEventListener("resize", initPositions);
+
+      initPositions();
+      setYesTransform();
+    </script>
+  </body>
+</html>
